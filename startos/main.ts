@@ -4,7 +4,7 @@ import { storeJson } from './fileModels/store.json'
 import { uiPort, mempoolBridge } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
-  console.info(i18n('Starting kindle-display!'))
+  console.info(i18n('Starting Kindle Bitcoin Display!'))
 
   const store = await storeJson.read().const(effects)
 
@@ -30,7 +30,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   const sub = sdk.SubContainer.of(
     effects,
-    { imageId: 'kindle-display' },
+    { imageId: 'kindle-bitcoin-display' },
     mounts,
     'main',
   )
@@ -43,11 +43,11 @@ export const main = sdk.setupMain(async ({ effects }) => {
         env: sharedEnv,
       },
       ready: {
-        display: i18n('Web Interface'),
+        display: i18n('Image Server'),
         fn: () =>
           sdk.healthCheck.checkPortListening(effects, uiPort, {
-            successMessage: i18n('The web interface is ready'),
-            errorMessage: i18n('The web interface is not ready'),
+            successMessage: i18n('The image server is ready'),
+            errorMessage: i18n('The image server is not ready'),
           }),
       },
       requires: [],
@@ -63,23 +63,25 @@ export const main = sdk.setupMain(async ({ effects }) => {
       },
       ready: {
         display: i18n('Data Updater'),
+        // cron.sh keeps the previous display.png when the screenshot fails, so
+        // the image's age is what the Kindle actually sees.
         fn: async () => {
           const result = await sub.exec([
             'sh',
             '-c',
-            `test -f /app/data/data.json && find /app/data/data.json -mmin -${Math.ceil(
+            `test -f /app/data/display.png && find /app/data/display.png -mmin -${Math.ceil(
               ((store?.updateInterval ?? 300) * 2) / 60,
             )} | grep -q .`,
           ])
           if (result.exitCode !== 0) {
             return {
               result: 'loading',
-              message: i18n('Waiting for first data update'),
+              message: i18n('Waiting for a fresh display image'),
             }
           }
           return {
             result: 'success',
-            message: i18n('Data is up to date'),
+            message: i18n('The display image is up to date'),
           }
         },
       },

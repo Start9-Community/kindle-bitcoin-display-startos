@@ -18,13 +18,14 @@ const inputSpec = InputSpec.of({
   theme: Value.select({
     name: i18n('Display Theme'),
     description: i18n(
-      'Which layout to render on the Kindle: plain, onchain, lightning, or a random pick each refresh',
+      'Which layout to render on the Kindle: plain, onchain, lightning, mining, or a random pick each refresh',
     ),
     default: 'plain',
     values: {
       plain: i18n('Plain'),
       onchain: i18n('Onchain'),
       lightning: i18n('Lightning'),
+      mining: i18n('Mining'),
       random: i18n('Random'),
     },
   }),
