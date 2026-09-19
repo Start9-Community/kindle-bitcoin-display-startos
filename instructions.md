@@ -1,24 +1,47 @@
-# Kindle Display
+# Kindle Bitcoin Display
 
 ## Documentation
 
-- [Upstream project README](https://github.com/dennisreimann/kindle-display) — covers the Kindle jailbreak, USB networking, and the server-side setup.
-- [Blog post: Kindle Status Display](https://d11n.net/kindle-status-display.html) — the author's write-up on the project.
+- [Kindle Status Display README](https://github.com/dennisreimann/kindle-display) — the upstream guide: jailbreaking the Kindle, installing the update script on it, and the themes.
 
 ## What you get on StartOS
 
-Kindle Display runs a web server that generates a grayscale screenshot for a jailbroken Kindle e-reader. The screenshot shows Bitcoin block height, exchange rates, mempool fees, Lightning network statistics, and Bitcoin quotes.
+A web server that renders a Bitcoin status page — block height, exchange rates, fees, mempool
+blocks, mining pools, Lightning statistics, a quote — to a grayscale image your Kindle fetches
+and shows. Everything on it comes from the **Mempool** service on this server, so the display
+never talks to a public explorer; the quote on the plain theme is the one thing fetched from the
+internet.
 
-On StartOS you get:
-
-- A **Web Interface** on port 3030 — serves the display page and `display.png` that the Kindle fetches. The address is plain **http://** (no HTTPS): the Kindle's browser cannot validate the self-signed certificate StartOS would otherwise present, so an HTTPS address would make the display unreachable. Use the URL on your LAN only — the traffic is not encrypted.
-- A **Configure** action to adjust the display theme, exchange rate currencies, and update interval.
-- **Mempool** (required) — the block height, fees, mempool blocks, Lightning statistics, and exchange rates come from your local Mempool instance.
+The **Kindle Image URL** interface is served over plain `http://`. That is deliberate: the
+Kindle's `wget` cannot use HTTPS, so an encrypted address would leave it with nothing to show.
+Keep it on your LAN. There is nothing to log in to and no app to open — the interface exists for
+the Kindle.
 
 ## Getting set up
 
-1. Install **Kindle Display** from the marketplace. **Mempool** is installed automatically as a required dependency.
-2. Open **Kindle Display** and click **Configure** to choose your display theme, exchange rate currencies, and update interval.
-3. Find the **Web Interface** URL on the service's Interfaces tab. It starts with `http://` — this is deliberate, see above.
-4. On your jailbroken Kindle, configure the update script to fetch `display.png` from the Web Interface URL. See the [upstream README](https://github.com/dennisreimann/kindle-display) for Kindle-side setup instructions.
-5. The display updates immediately on start, then on the configured interval (default 5 minutes).
+1. Make sure **Mempool** is installed and running — Kindle Bitcoin Display starts only while it is.
+2. Start Kindle Bitcoin Display. The first image is ready about fifteen seconds later. To preview
+   it, open the **Kindle Image URL** address in a browser with `/display.png` added.
+3. Run **Configure** if you want a different theme, other currencies, or a different refresh
+   interval.
+4. On the Kindle, follow the upstream README to install `update.sh`, and set its `BASE` to the
+   **Kindle Image URL** address shown on this service's page.
+
+## Using Kindle Bitcoin Display
+
+### Themes
+
+- **Plain** — block height, two exchange rates and a quote.
+- **Onchain** — block height, the latest block, fee estimates and the next mempool blocks.
+- **Lightning** — Lightning network statistics. These appear only if Mempool's own Lightning
+  explorer is enabled (**Enable Lightning** on the Mempool service); otherwise the theme shows
+  the block height and rates alone.
+- **Mining** — the latest block, unconfirmed transactions, the next difficulty adjustment and
+  the top mining pools of the week.
+- **Random** — a different one of the four on every refresh.
+
+### Actions
+
+- **Configure** — choose the theme, the two currencies shown as exchange rates (USD, EUR, GBP,
+  CHF, CAD, AUD or JPY), and how many seconds pass between refreshes (60 to 3600). The display
+  re-renders right away.

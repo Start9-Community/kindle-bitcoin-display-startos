@@ -1,30 +1,36 @@
 # Updating the upstream version
 
+Upstream is the `upstream/` git submodule (<https://github.com/dennisreimann/kindle-display>),
+built by this repo's `Dockerfile` from `upstream/server/`; there is no `dockerTag`. The upstream
+version is the `version` field of `upstream/server/package.json`, which matches the release tag.
+
 ## Determining the upstream version
 
-Upstream is a git submodule at `upstream/` pointing to [dennisreimann/kindle-display](https://github.com/dennisreimann/kindle-display). The version is the `version` field in `upstream/server/package.json` (e.g. `0.6.4`).
-
-To check the latest upstream version:
-
-```bash
-git -C upstream describe --tags  # or: git -C upstream log --oneline -1
+```sh
+gh release view -R dennisreimann/kindle-display --json tagName -q .tagName
+git -C upstream fetch --tags && git -C upstream tag --sort=-v:refname | head -5
 ```
 
-The current pin is recorded in `startos/versions/current.ts` as the `version` field (e.g. `0.6.4:0`).
+The pin is the submodule's recorded commit in this repo's tree.
 
 ## Applying the bump
 
-1. Update the submodule to the desired upstream commit/tag:
+1. Move the submodule to the new tag and stage the pointer:
 
-   ```bash
-   cd upstream
-   git checkout <tag-or-commit>
-   cd ..
+   ```sh
+   git -C upstream fetch --tags
+   git -C upstream checkout vX.Y.Z
    git add upstream
    ```
 
-2. Edit `startos/versions/current.ts` and update the `version` field to match `<upstream-version>:0`.
-
-3. Update the release notes in `startos/versions/current.ts` if there are user-visible changes.
-
-4. Run `make` to verify the package builds.
+2. Set `version` in `startos/versions/current.ts` to `X.Y.Z:0` and rewrite `releaseNotes` in all
+   five locales. A packaging-only change keeps the upstream half and bumps the revision instead.
+3. Diff `upstream/server` between the two tags for what the package relies on: the `THEMES`
+   list in `helpers.mjs` (mirrored in `startos/fileModels/store.json.ts` and
+   `startos/actions/configure.ts`), the variables `data.mjs` and `cron.sh` read
+   (`MEMPOOL_BASE_URL`, `DISPLAY_THEME`, `DISPLAY_RATE1`, `DISPLAY_RATE2`,
+   `DISPLAY_SERVER_PORT`), the Mempool endpoints `data.mjs` calls (the dependency's
+   `versionRange` in `startos/dependencies.ts` must cover them), the `data/` paths `cron.sh`
+   writes, and `Dockerfile`'s apt packages against upstream's own `Dockerfile`.
+4. Rebuild and install on a StartOS box with Mempool running; confirm both health checks go green,
+   `display.png` renders, and **Configure** still restarts the daemons with the new settings.

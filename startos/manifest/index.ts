@@ -2,28 +2,21 @@ import { setupManifest } from '@start9labs/start-sdk'
 import { long, short } from './i18n'
 
 export const manifest = setupManifest({
-  id: 'kindle-display',
-  title: 'Kindle Display',
+  id: 'kindle-bitcoin-display',
+  title: 'Kindle Bitcoin Display',
   license: 'MIT',
-  packageRepo: 'https://github.com/dennisreimann/kindle-display-startos',
+  packageRepo:
+    'https://github.com/Start9-Community/kindle-bitcoin-display-startos',
   upstreamRepo: 'https://github.com/dennisreimann/kindle-display',
   marketingUrl: 'https://d11n.net/kindle-status-display.html',
-  donationUrl: 'https://d11n.net',
+  donationUrl: null,
   description: { short, long },
   volumes: ['main'],
   images: {
-    'kindle-display': {
+    'kindle-bitcoin-display': {
       source: { dockerBuild: {} },
       arch: ['x86_64', 'aarch64'],
     },
-  },
-  alerts: {
-    install: null,
-    update: null,
-    uninstall: null,
-    restore: null,
-    start: null,
-    stop: null,
   },
   dependencies: {
     mempool: {
@@ -32,7 +25,7 @@ export const manifest = setupManifest({
       optional: false,
       metadata: {
         title: 'Mempool',
-        icon: 'https://raw.githubusercontent.com/Start9Labs/mempool-startos/master/icon.svg',
+        icon: 'https://raw.githubusercontent.com/Start9Labs/mempool-startos/refs/heads/master/icon.svg',
       },
     },
   },

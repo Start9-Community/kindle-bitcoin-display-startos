@@ -2,18 +2,19 @@ export const DEFAULT_LANG = 'en_US'
 
 const dict = {
   // main.ts
-  'Starting kindle-display!': 0,
-  'Web Interface': 1,
-  'The web interface is ready': 2,
-  'The web interface is not ready': 3,
+  'Starting Kindle Bitcoin Display!': 0,
+  'Image Server': 1,
+  'The image server is ready': 2,
+  'The image server is not ready': 3,
   'Data Updater': 4,
-  'Waiting for first data update': 5,
-  'Data is up to date': 6,
+  'Waiting for a fresh display image': 5,
+  'The display image is up to date': 6,
   // interfaces.ts
-  'Serves the display page and display.png screenshot for the Kindle': 7,
+  'Kindle Image URL': 7,
+  'The address the Kindle fetches display.png from — set it as BASE in the Kindle update script': 24,
   // actions/configure.ts
   'Display Theme': 8,
-  'Which layout to render on the Kindle: plain, onchain, lightning, or a random pick each refresh': 9,
+  'Which layout to render on the Kindle: plain, onchain, lightning, mining, or a random pick each refresh': 9,
   Plain: 10,
   Onchain: 11,
   Lightning: 12,
@@ -27,6 +28,7 @@ const dict = {
   Configure: 20,
   'Adjust display theme, exchange rates, and update interval': 21,
   seconds: 22,
+  Mining: 23,
 } as const
 
 /**

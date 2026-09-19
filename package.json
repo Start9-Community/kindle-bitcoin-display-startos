@@ -1,13 +1,12 @@
 {
-  "name": "kindle-display-startos",
+  "name": "kindle-bitcoin-display-startos",
   "scripts": {
     "build": "rm -rf ./javascript && ncc build startos/index.ts -o ./javascript",
     "prettier": "prettier --write startos",
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@start9labs/start-sdk": "2.0.9",
-    "mempool-startos": "github:Start9Labs/mempool-startos#master"
+    "@start9labs/start-sdk": "2.0.9"
   },
   "overrides": {
     "@start9labs/start-sdk": "$@start9labs/start-sdk"

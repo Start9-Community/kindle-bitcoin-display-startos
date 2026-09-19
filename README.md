@@ -1,70 +1,183 @@
-# Kindle Display on StartOS
+<p align="center">
+  <img src="icon.svg" alt="Kindle Bitcoin Display Logo" width="21%">
+</p>
 
-> Everything not listed in this document should behave the same as upstream kindle-display.
+# Kindle Bitcoin Display on StartOS
+
+> Everything not listed in this document should behave the same as upstream
+> Kindle Status Display. If a feature, setting, or behavior is not mentioned here,
+> the upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
+
+Kindle Bitcoin Display renders a Bitcoin status page — block height, exchange rates,
+fees, mempool blocks, mining pools, Lightning statistics — to a grayscale PNG
+that a jailbroken Kindle fetches and shows. This package builds the upstream
+server, points it at the Mempool service on the same box, replaces its cron
+job with a daemon, and exposes its settings as an action. See
+[the upstream project](https://github.com/dennisreimann/kindle-display) for the
+application itself.
+
+---
+
+## Table of Contents
+
+- [Image and Container Runtime](#image-and-container-runtime)
+- [Volume and Data Layout](#volume-and-data-layout)
+- [File Models](#file-models)
+- [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
+- [Limitations and Differences](#limitations-and-differences)
+- [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
+
+---
 
 ## Image and Container Runtime
 
-The package builds a custom Docker image from `upstream/server/` (a git submodule pinned to [dennisreimann/kindle-display](https://github.com/dennisreimann/kindle-display)). The image is based on `node:24-slim` and installs `firefox-esr`, `pngcrush`, `psmisc`, and `ca-certificates`. Data fetching is pure Node.
+The image is built by this repo's `Dockerfile` from `upstream/server/` — a git
+submodule pinned to the upstream release — on a `node:24-slim` base with
+`firefox-esr`, `pngcrush` and `psmisc`, for x86_64 and aarch64. The upstream
+Express server, Pug views and `cron.sh` screenshot pipeline run unmodified;
+`docker/` adds the two scripts the package needs.
 
-The upstream `server/` directory is included as a git submodule. Configuration arrives via environment variables (`MEMPOOL_BASE_URL`, `DISPLAY_THEME`, `DISPLAY_RATE1/2`). Data files (`data.json`, `display.png`) live in `server/data/`, which in StartOS is the volume mount point. StartOS-specific setup is in `docker/`:
+One subcontainer, `main`, runs two daemons:
 
-- `docker/entrypoint.sh` — seeds an empty `data.json`, truncates `.env` (config arrives via daemon env vars), then execs the daemon command. No X server is involved.
-- `docker/updater-loop.sh` — replaces the upstream cron job; runs the data fetch + screenshot immediately on start, then repeats on the configured interval.
+| Daemon    | Command                                | Purpose                                                                                          |
+| --------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `web`     | `docker/entrypoint.sh` → `npm start`   | The Express server on 3030: `display.png` for the Kindle, and the page it is rendered from.       |
+| `updater` | `docker/entrypoint.sh` → `updater-loop.sh` | Runs upstream `cron.sh` — fetch data from Mempool, screenshot the page with headless Firefox, grayscale it — once at start and then every update interval. Requires `web`. |
 
-Two daemons share a single subcontainer:
-
-- **`web`** — the Express webserver (`node index.js`) on port 3030. Serves the display page and `display.png`.
-- **`updater`** — runs `updater-loop.sh`, which calls the upstream `cron.sh` (data fetch + screenshot). Requires `web` to be ready first.
+`docker/entrypoint.sh` seeds an empty `data.json` on the volume so the server
+does not 500 before the first update, and truncates the image's `.env` so that
+configuration comes only from the daemon environment.
 
 ## Volume and Data Layout
 
-Single volume `main` mounted at `/app/data` inside the subcontainer — the `server/data/` directory in upstream. Contains:
+One volume, `main`, mounted at `/app/data` — upstream's `server/data/`
+directory.
 
-- `store.json` — StartOS-level configuration (theme, rates, update interval)
-- `data.json` — last fetched data (written by `data.mjs` via `npm run data`)
-- `display.png` — last generated grayscale screenshot (written by `cron.sh`)
+| File             | Contents                                                             |
+| ---------------- | -------------------------------------------------------------------- |
+| `store.json`     | This package's settings (below).                                     |
+| `data.json`      | The last data fetched from Mempool, written by `data.mjs` each cycle. |
+| `screenshot.png` | The last raw Firefox screenshot.                                     |
+| `display.png`    | The grayscale image the Kindle fetches.                              |
 
-## Network Access and Interfaces
+## File Models
 
-One interface on port 3030 (`type: 'ui'`), serving the display page and `display.png`. The Kindle points its update script at this URL.
+One model, `store.json`: the display theme, the two exchange-rate currencies
+and the update interval. It is seeded with defaults at install and rewritten
+only by **Configure**. Every key is re-asserted on every start as the daemons'
+environment (`DISPLAY_THEME`, `DISPLAY_RATE1`, `DISPLAY_RATE2`,
+`UPDATE_INTERVAL`), so a hand edit takes effect on the next start and survives
+until the action is next run.
 
-The interface is bound as a **plain-HTTP binding** (`protocol: null`, `secure: { ssl: false }`, `schemeOverride: { ssl: null, noSsl: 'http' }`) rather than the usual `protocol: 'http'` treatment. StartOS would otherwise front the port with its own TLS listener, terminating with a self-signed device certificate that the Kindle's browser cannot validate — the display would be unreachable from the device. Marking the binding non-SSL publishes the plaintext forward on the LAN gateways (StartOS suppresses plaintext addresses unless the binding explicitly declares itself plain — a `secure: null` binding follows the gateway's security policy instead), so the Interfaces tab shows only `http://` addresses and the port is DNAT'd straight to the container with no TLS listener in front.
-
-Consequences: running `setupInterfaces` in a later version that reverts to `protocol: 'http'` would silently drop the http address again, and the interface carries no HTTPS variant at all — traffic is plain on the LAN. That is acceptable here: the display is public status data, not a credential surface.
-
-The updater daemon pulls all display data from a **required local Mempool** instance (via the `MEMPOOL_BASE_URL` bridge):
-
-- **Mempool** (local, direct) — block height, fees, mempool blocks, Lightning statistics, exchange rates
-- **bitcoin-quotes.com** (external) — quotes for the plain theme
-
-Note: upstream `data.mjs` performs its own HTTP requests and does not route through a SOCKS5/Tor proxy, so the external bitcoin-quotes call goes out directly.
-
-## Actions (StartOS UI)
-
-- **Configure** — adjust display theme (plain/onchain/lightning/random), primary and secondary exchange rate currency (USD/EUR/GBP/CHF/CAD/AUD/JPY), and update interval.
-
-## Backups and Restore
-
-The `main` volume is backed up in full. This preserves `store.json` (configuration), `data.json` (last data), and `display.png` (last screenshot). Restore re-initializes without any special handling.
-
-## Health Checks
-
-- **Web Interface** — `checkPortListening` on port 3030. Reports ready when the Express server is accepting connections.
-- **Data Updater** — checks that `data.json` exists and was modified within twice the update interval. Reports `loading` while the first update is in progress, `success` once data is fresh.
+Upstream reads its settings from a `.env` file; the package empties that file
+at every start and delivers the same variables through the environment, with
+`MEMPOOL_BASE_URL` resolved from the Mempool dependency's bridge address and
+`DISPLAY_SERVER_PORT` fixed at 3030.
 
 ## Dependencies
 
-- **Mempool** (required) — provides the block height, fees, mempool blocks, Lightning statistics, and exchange rates displayed on the Kindle.
+- **Mempool** (required, running, `webui` health check) — every figure on the
+  display except the quote comes from its REST API over the container bridge:
+  blocks, prices, fees, mempool blocks, mining pools, difficulty adjustment,
+  Lightning statistics. The Lightning figures need Mempool's own Lightning
+  explorer enabled; without it those requests 404 and the lightning theme
+  renders without them.
 
-Tor and Bitcoin were previously dependencies of this package. Upstream dropped SOCKS/Tor proxy support from its data pipeline when data fetching moved from `data.sh` (shell/curl) to pure-Node `data.mjs` in the `Refactor data fetching and views` commit, and block height now comes from Mempool rather than a local node. So Tor and Bitcoin are no longer needed.
+## Network Access and Interfaces
+
+| Interface id | Type  | Internal port | Protocol   | Serves                                                                     |
+| ------------ | ----- | ------------- | ---------- | -------------------------------------------------------------------------- |
+| `ui`         | `api` | 3030          | plain HTTP | `/display.png` for the Kindle; `/`, `/<theme>` and `/screenshot.png` are the page it is rendered from, viewable in a browser as a preview. |
+
+Its consumer is the Kindle, not a browser, which is why it is an `api`
+interface named **Kindle Image URL** rather than a `ui` with a launch button.
+The binding is deliberately plain HTTP with no TLS variant (`protocol: null`,
+`secure: { ssl: false }`, `addSsl: null`): the Kindle fetches the image with
+BusyBox `wget`, which cannot speak TLS or validate the StartOS certificate, so
+an HTTPS-only address would leave the device with nothing to show. The
+Interfaces tab therefore lists `http://` addresses only, and nothing on this
+interface is secret.
+
+Outbound, the updater reaches Mempool over the bridge and, for the plain and
+random themes, fetches a quote from `bitcoin-quotes.com` on the public
+internet directly.
+
+## Installation and First-Run Flow
+
+Nothing is asked of the user. Install seeds `store.json` with the plain theme,
+USD/EUR and a 300 s interval; the first start runs an update immediately, so
+`display.png` exists within about fifteen seconds of Mempool being reachable.
+The Kindle-side setup — jailbreak, `update.sh` pointed at this interface's
+address — is upstream's and is not automated.
+
+## Actions
+
+### `configure` — Configure
+
+- **When to run it:** to change the theme (plain, onchain, lightning, mining, random), either exchange-rate currency, or how often the display refreshes.
+- **What it changes:** `store.json`, then the daemons' environment.
+- **Cost:** both daemons restart, and the updater runs a fresh cycle at once, so the new display is ready within about fifteen seconds.
+- **Repeat safety:** idempotent.
+- **Outputs:** none.
+
+## Tasks
+
+None. The service is never held on a prompt.
+
+## Health Checks
+
+- **`web` — Image Server.** Port 3030 listening. Not listening past the first few seconds means `npm start` died; read the log.
+- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Stuck on `loading` means the update cycle is failing: `data.mjs` cannot reach Mempool (the daemon log shows `Fetched data for block height unknown`) or Firefox is failing to screenshot (`Screenshot failed - keeping previous display`). The check watches the image, not the data, because `cron.sh` keeps the previous image on a screenshot failure — which is exactly what the Kindle would keep showing.
+
+## Backups and Restore
+
+Strategy: the `main` volume copied wholesale — settings, last data and last
+images, a few hundred kilobytes. A restored instance comes back stopped with
+its settings intact and needs Mempool running before it starts; nothing has to
+be re-entered.
 
 ## Limitations and Differences
 
-- **No cron** — the upstream cron job is replaced by the `updater` daemon's loop script. The update interval is configurable via the Configure action (default 300 seconds).
-- **No X server / Xvfb** — the screenshot is taken by headless Firefox. `cron.sh` writes an absolute output path, keeps firefox-esr/pngcrush noise out of the logs, and logs one short line per run: `screenshot ok - block height <n>` on success, or `screenshot failed - keeping previous display.png` (exit 1, previous image kept) on failure.
+1. **The interface is plain HTTP only**, for the Kindle's sake (see Network Access and Interfaces), and there is no browser UI to launch — the page behind it is a preview at most. Use it on the LAN.
+2. **Cron is replaced by the `updater` daemon**, so the interval is a setting rather than a crontab line, and the first update runs at start instead of at the next minute.
+3. **Mempool is required rather than optional.** Upstream falls back to the public `mempool.space` when no local instance is configured; this package always uses the local service.
+4. **The quote for the plain and random themes is fetched from `bitcoin-quotes.com`** over the clearnet, as upstream does; there is no proxy option.
+5. **The Lightning figures depend on Mempool's Lightning explorer** being enabled there; the package cannot enable it.
 
-## What Is Unchanged from Upstream
+---
 
-- The Express webserver, Pug templates, static assets, and `helpers.mjs` are used as-is.
-- The `cron.sh` screenshot pipeline is unchanged.
-- All upstream themes (plain, onchain, lightning, random) are available.
+## Quick Reference for AI Consumers
+
+```yaml
+package_id: 'kindle-bitcoin-display'
+image: built from ./Dockerfile
+architectures: [x86_64, aarch64]
+subcontainers: [main]
+volumes:
+  main: /app/data
+file_models:
+  - store.json
+startos_managed_env_vars:
+  - DISPLAY_SERVER_PORT
+  - DISPLAY_THEME
+  - DISPLAY_RATE1
+  - DISPLAY_RATE2
+  - MEMPOOL_BASE_URL
+  - UPDATE_INTERVAL
+dependencies: [mempool]
+interfaces:
+  ui: { type: api, port: 3030 }
+actions:
+  - configure
+tasks: []
+health_checks:
+  - web
+  - updater
+```
