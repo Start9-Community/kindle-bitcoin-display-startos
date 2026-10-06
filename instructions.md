@@ -19,7 +19,9 @@ the Kindle.
 
 ## Getting set up
 
-1. Make sure **Mempool** is installed and running — Kindle Bitcoin Display starts only while it is.
+1. Make sure **Mempool** is installed and running. Kindle Bitcoin Display starts without it, but
+   every figure on the display comes from Mempool: while Mempool is stopped, each refresh shows
+   the display without them.
 2. Start Kindle Bitcoin Display. The first image is ready about fifteen seconds later. To preview
    it, open the **Kindle Image URL** address in a browser with `/display.png` added.
 3. Run **Configure** if you want a different theme, other currencies, or a different refresh
