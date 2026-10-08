@@ -18,7 +18,7 @@ const inputSpec = InputSpec.of({
   theme: Value.select({
     name: i18n('Display Theme'),
     description: i18n(
-      'Which layout to render on the Kindle: plain, onchain, lightning, mining, or a random pick each refresh',
+      "- Plain: block height, two exchange rates and a quote fetched from bitcoin-quotes.com\n- Onchain: the latest block, fee estimates and the next mempool blocks\n- Lightning: Lightning network capacity, nodes and channels, which need Mempool's Lightning explorer enabled\n- Mining: the latest block, unconfirmed transactions, the next difficulty adjustment and the week's top mining pools\n- Random: one of the four, picked at random on every refresh",
     ),
     default: 'plain',
     values: {
@@ -31,19 +31,25 @@ const inputSpec = InputSpec.of({
   }),
   rate1: Value.select({
     name: i18n('Primary Exchange Rate'),
-    description: i18n('Currency for the primary rate. Fetched from Mempool.'),
+    description: i18n(
+      'The first Bitcoin price shown on the display.\n- USD: US dollar\n- EUR: euro\n- GBP: British pound\n- CHF: Swiss franc\n- CAD: Canadian dollar\n- AUD: Australian dollar\n- JPY: Japanese yen',
+    ),
     default: 'USD',
     values: CURRENCIES,
   }),
   rate2: Value.select({
     name: i18n('Secondary Exchange Rate'),
-    description: i18n('Currency for the secondary rate.'),
+    description: i18n(
+      'The second Bitcoin price shown on the display.\n- USD: US dollar\n- EUR: euro\n- GBP: British pound\n- CHF: Swiss franc\n- CAD: Canadian dollar\n- AUD: Australian dollar\n- JPY: Japanese yen',
+    ),
     default: 'EUR',
     values: CURRENCIES,
   }),
   updateInterval: Value.number({
     name: i18n('Update Interval'),
-    description: i18n('Seconds between scheduled data updates'),
+    description: i18n(
+      "How often fresh data is fetched from Mempool and a new display image rendered. The Kindle downloads the image on its own schedule, every five minutes with the upstream update script's default, so an interval longer than the Kindle's leaves it showing the same image more than once.",
+    ),
     required: false,
     default: 300,
     min: 60,

@@ -18,15 +18,4 @@ export const manifest = setupManifest({
       arch: ['x86_64', 'aarch64'],
     },
   },
-  dependencies: {
-    mempool: {
-      description:
-        'Provides the block height, fees, mempool blocks, Lightning statistics, and exchange rates displayed on the Kindle',
-      optional: false,
-      metadata: {
-        title: 'Mempool',
-        icon: 'https://raw.githubusercontent.com/Start9Labs/mempool-startos/refs/heads/master/icon.svg',
-      },
-    },
-  },
 })

@@ -12,8 +12,16 @@ admin credentials", "expose a web UI") to the constructs, the reference pages, a
 package to copy. Find the recipe before you read this package's neighbours: a package you reach by
 grepping may be non-conformant, and the recipe outranks it.
 
+Freshly scaffolded? Work the
+[New Package Checklist](../start-technologies/projects/start-sdk/docs/src/new-package-checklist.md)
+(or <https://docs.start9.com/packaging/new-package-checklist.html>) from top to bottom. It is a
+guide page, not a file in this repo — read it, don't copy it in.
+
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
 **Fix a defect you spot rather than reporting it** — you have the package open and the
 context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
@@ -26,20 +34,14 @@ verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **The application is the `upstream/` submodule and is never edited here.** The `Dockerfile`
-  copies `upstream/server/` in; fixes to the server go to
-  <https://github.com/dennisreimann/kindle-display>, and this repo moves the pin. Bumps go through
+- **The application is the `upstream/` submodule and is never edited here.** Fixes to the server
+  go to <https://github.com/dennisreimann/kindle-display>, and this repo moves the pin through
   `UPDATING.md`.
-- **The `ui` interface must stay plain HTTP and `type: 'api'`** — `protocol: null`,
-  `secure: { ssl: false }`, `addSsl: null` in `startos/interfaces.ts`. The Kindle fetches
-  `display.png` with BusyBox `wget`, which has no TLS; switching to `protocol: 'http'` publishes an
-  HTTPS-only address the device cannot use, and `type: 'ui'` adds a launch button for a page nobody
-  is meant to open.
-- **`docker/entrypoint.sh` truncates the image's `.env` on every start.** Upstream's `cron.sh`
-  `source`s that file, so a value left in it overrides the daemon environment; settings reach the
-  app only as `DISPLAY_*`, `MEMPOOL_BASE_URL` and `UPDATE_INTERVAL` from `main.ts`.
+- **Keep the `ui` interface plain HTTP and `type: 'api'`** (`protocol: null`,
+  `secure: { ssl: false }`, `addSsl: null`): `protocol: 'http'` publishes an HTTPS-only address
+  the Kindle's `wget` cannot use, and `type: 'ui'` adds a launch button for a page nobody opens.
 - **The theme list is duplicated from upstream's `helpers.mjs` `THEMES`** in
-  `startos/fileModels/store.json.ts` and `startos/actions/configure.ts`; a submodule bump that
-  adds or renames a theme has to land in both.
-- **The `.dockerignore` keeps the build context to `Dockerfile`, `docker/` and the submodule**,
-  and excludes `upstream/server/.env` so no local configuration is baked into the image.
+  `startos/fileModels/store.json.ts` and `startos/actions/configure.ts` (values and the Display
+  Theme description); a submodule bump that adds or renames a theme has to land in all of them.
+- **Keep `upstream/server/.env` excluded in `.dockerignore`**, so no local configuration is baked
+  into the image.

@@ -134,14 +134,14 @@ None. The service is never held on a prompt.
 ## Health Checks
 
 - **`web` — Image Server.** Port 3030 listening. Not listening past the first few seconds means `npm start` died; read the log.
-- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Stuck on `loading` means the update cycle is failing: `data.mjs` cannot reach Mempool (the daemon log shows `Fetched data for block height unknown`) or Firefox is failing to screenshot (`Screenshot failed - keeping previous display`). The check watches the image, not the data, because `cron.sh` keeps the previous image on a screenshot failure — which is exactly what the Kindle would keep showing.
+- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Stuck on `loading` means Firefox is failing to screenshot (`Screenshot failed - keeping previous display`). The check watches the image, not the data, because `cron.sh` keeps the previous image on a screenshot failure — which is exactly what the Kindle would keep showing. An unreachable Mempool does not trip it: `data.mjs` writes empty fields (the daemon log shows `Fetched data for block height unknown`), and the fresh image renders without the figures.
 
 ## Backups and Restore
 
 Strategy: the `main` volume copied wholesale — settings, last data and last
 images, a few hundred kilobytes. A restored instance comes back stopped with
-its settings intact and needs Mempool running before it starts; nothing has to
-be re-entered.
+its settings intact and needs Mempool running before the display shows any
+figures; nothing has to be re-entered.
 
 ## Limitations and Differences
 

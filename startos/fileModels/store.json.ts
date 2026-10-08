@@ -1,7 +1,7 @@
 import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 
-const shape = z.object({
+const shape = z.looseObject({
   theme: z
     .enum(['plain', 'onchain', 'lightning', 'mining', 'random'])
     .catch('plain'),
