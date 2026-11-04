@@ -23,14 +23,10 @@ The pin is the submodule's recorded commit in this repo's tree.
    git add upstream
    ```
 
-2. Set `version` in `startos/versions/current.ts` to `X.Y.Z:0` and rewrite `releaseNotes` in all
-   five locales. A packaging-only change keeps the upstream half and bumps the revision instead.
-3. Diff `upstream/server` between the two tags for what the package relies on: the `THEMES`
+2. Diff `upstream/server` between the two tags for what the package relies on: the `THEMES`
    list in `helpers.mjs` (mirrored in `startos/fileModels/store.json.ts` and
    `startos/actions/configure.ts`), the variables `data.mjs` and `cron.sh` read
    (`MEMPOOL_BASE_URL`, `DISPLAY_THEME`, `DISPLAY_RATE1`, `DISPLAY_RATE2`,
    `DISPLAY_SERVER_PORT`), the Mempool endpoints `data.mjs` calls (the dependency's
    `versionRange` in `startos/dependencies.ts` must cover them), the `data/` paths `cron.sh`
    writes, and `Dockerfile`'s apt packages against upstream's own `Dockerfile`.
-4. Rebuild and install on a StartOS box with Mempool running; confirm both health checks go green,
-   `display.png` renders, and **Configure** still restarts the daemons with the new settings.
