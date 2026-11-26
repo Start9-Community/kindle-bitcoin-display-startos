@@ -134,7 +134,7 @@ None. The service is never held on a prompt.
 ## Health Checks
 
 - **`web` — Image Server.** Port 3030 listening. Not listening past the first few seconds means `npm start` died; read the log.
-- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Since upstream 1.3.0 the cycle is fail-safe: a failed Mempool fetch, invalid block data, a failed or invalid screenshot, or a hung Firefox (killed after `FIREFOX_TIMEOUT_SECONDS`, default 120 s) all keep the previous image and exit nonzero — so a stuck `loading` means the last cycles produced no publishable image, and the daemon log names the cause (`Data update failed`, `Invalid block data`, `Screenshot failed`, `Screenshot conversion failed`). The check watches the image, not the data: it trips exactly when what the Kindle would keep showing has gone stale. An unreachable Mempool therefore trips it now: `data.mjs` writes null figures, `cron.sh` rejects the invalid block data and keeps the old image, which then ages out.
+- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Failed data generation, missing or invalid block data, and failed image generation keep the previous image and exit nonzero. Missing optional figures such as fees or prices do not abort a cycle when block data is valid. Firefox's timeout is `FIREFOX_TIMEOUT_SECONDS` (default 120 s). The check watches the image's age, not `data.json`; the updater log identifies the failed step (`Data update failed`, `Invalid block data`, `Screenshot failed`, `Screenshot conversion failed`).
 
 ## Backups and Restore
 
