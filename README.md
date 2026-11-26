@@ -40,7 +40,7 @@ application itself.
 
 The image is built by this repo's `Dockerfile` from `upstream/server/` — a git
 submodule pinned to the upstream release — on a `node:24-slim` base with
-`firefox-esr`, `pngcrush` and `psmisc`, for x86_64 and aarch64. The upstream
+`firefox-esr` and `pngcrush`, for x86_64 and aarch64. The upstream
 Express server, Pug views and `cron.sh` screenshot pipeline run unmodified;
 `docker/` adds the two scripts the package needs.
 
@@ -134,7 +134,7 @@ None. The service is never held on a prompt.
 ## Health Checks
 
 - **`web` — Image Server.** Port 3030 listening. Not listening past the first few seconds means `npm start` died; read the log.
-- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Stuck on `loading` means Firefox is failing to screenshot (`Screenshot failed - keeping previous display`). The check watches the image, not the data, because `cron.sh` keeps the previous image on a screenshot failure — which is exactly what the Kindle would keep showing. An unreachable Mempool does not trip it: `data.mjs` writes empty fields (the daemon log shows `Fetched data for block height unknown`), and the fresh image renders without the figures.
+- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Failed data generation, missing or invalid block data, and failed image generation keep the previous image and exit nonzero. Missing optional figures such as fees or prices do not abort a cycle when block data is valid. Firefox's timeout is `FIREFOX_TIMEOUT_SECONDS` (default 120 s). The check watches the image's age, not `data.json`; the updater log identifies the failed step (`Data update failed`, `Invalid block data`, `Screenshot failed`, `Screenshot conversion failed`).
 
 ## Backups and Restore
 
