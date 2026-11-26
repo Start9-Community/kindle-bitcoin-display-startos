@@ -1,18 +1,18 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '1.3.0:0',
+  version: '1.3.0:1',
   releaseNotes: {
     en_US:
-      'Upstream 1.3.0: fee estimates fall back to recommended fees on older Mempool versions; the update cycle is now fail-safe — failed fetches, invalid screenshots or a hung Firefox keep the previous display, overlapping updates are serialized, and a stuck browser is killed after a timeout.',
+      'Rebuilt with start-sdk 4.1.0: fixes a daemon hang when one of its output streams fills, health-check memory growth, and keeps environment values out of process command lines. No upstream changes — still 1.3.0.',
     es_ES:
-      'Upstream 1.3.0: en versiones antiguas de Mempool las estimaciones de comisiones recurren a las comisiones recomendadas; el ciclo de actualización ahora es tolerante a fallos — intentos fallidos, capturas no válidas o un Firefox colgado conservan la imagen anterior, las actualizaciones que se solapan se serializan y un navegador atascado se mata tras un tiempo de espera.',
+      'Recompilado con start-sdk 4.1.0: corrige un bloqueo del demonio cuando uno de sus streams se llena, el crecimiento en memoria de los health checks, y mantiene los valores de entorno fuera de las líneas de comando de los procesos. Sin cambios upstream — sigue siendo 1.3.0.',
     de_DE:
-      'Upstream 1.3.0: Gebührenschätzungen greifen bei älteren Mempool-Versionen auf die empfohlenen Gebühren zurück; der Aktualisierungszyklus ist jetzt fehlertolerant — fehlgeschlagene Abrufe, ungültige Screenshots oder ein hängender Firefox bewahren das bisherige Display, sich überlappende Aktualisierungen werden serialisiert und ein festhängender Browser nach Ablauf des Timeouts beendet.',
+      'Mit start-sdk 4.1.0 neu gebaut: behebt einen Daemon-Hänger, wenn einer seiner Ausgabe-Streams vollläuft, das Speicherwachstum der Health-Checks, und hält Umgebungswerte aus Prozess-Kommandozeilen heraus. Keine Upstream-Änderungen — weiterhin 1.3.0.',
     pl_PL:
-      'Upstream 1.3.0: na starszych wersjach Mempool szacunki opłat korzystają z opłat zalecanych; cykl aktualizacji jest teraz odporny na błędy — nieudane pobrania, nieprawidłowe zrzuty ekranu lub zawieszony Firefox zachowują poprzedni obraz, nakładające się aktualizacje są szeregowane, a zablokowana przeglądarka jest zamykana po upływie limitu czasu.',
+      'Przebudowano z start-sdk 4.1.0: naprawia zawieszanie demona, gdy jeden z jego strumieni wyjściowych się zapełnia, przyrost pamięci health checków, i usuwa wartości środowiska z linii poleceń procesów. Bez zmian upstream — nadal 1.3.0.',
     fr_FR:
-      'Upstream 1.3.0 : sur les anciennes versions de Mempool, les estimations de frais utilisent en secours les frais recommandés ; le cycle de mise à jour est désormais tolérant aux pannes — échecs de récupération, captures invalides ou Firefox bloqué conservent l’image précédente, les mises à jour qui se chevauchent sont sérialisées et un navigateur bloqué est arrêté après un délai.',
+      'Reconstruit avec start-sdk 4.1.0 : corrige un blocage de démon quand l’un de ses flux de sortie se remplit, la croissance mémoire des health checks, et garde les valeurs d’environnement hors des lignes de commande des processus. Aucun changement upstream — toujours 1.3.0.',
   },
   migrations: {
     up: async ({ effects }) => {},
