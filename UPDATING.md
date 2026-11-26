@@ -15,6 +15,15 @@ The pin is the submodule's recorded commit in this repo's tree.
 
 ## Applying the bump
 
+0. Check the version the reference registry serves — it decides which version this release may
+   claim (a follow-up to a version the registry does not serve yet ships under that same
+   version, not a revision bump) and what the release notes must cover (every change since the
+   served version, whether or not this branch shipped it):
+
+   ```sh
+   start-cli -r https://community-registry.start9.com registry package get kindle-bitcoin-display --format json
+   ```
+
 1. Move the submodule to the new tag and stage the pointer:
 
    ```sh
@@ -29,4 +38,7 @@ The pin is the submodule's recorded commit in this repo's tree.
    (`MEMPOOL_BASE_URL`, `DISPLAY_THEME`, `DISPLAY_RATE1`, `DISPLAY_RATE2`,
    `DISPLAY_SERVER_PORT`), the Mempool endpoints `data.mjs` calls (the dependency's
    `versionRange` in `startos/dependencies.ts` must cover them), the `data/` paths `cron.sh`
-   writes, and `Dockerfile`'s apt packages against upstream's own `Dockerfile`.
+   writes, and `Dockerfile`'s apt packages against upstream's own `Dockerfile`. Then re-read
+   the behavior prose in `README.md` and `instructions.md` (setup, health checks,
+   troubleshooting): an upstream behavior change invalidates paraphrased claims that no
+   keyword search matches.
