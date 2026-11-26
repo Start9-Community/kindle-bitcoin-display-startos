@@ -40,7 +40,7 @@ application itself.
 
 The image is built by this repo's `Dockerfile` from `upstream/server/` — a git
 submodule pinned to the upstream release — on a `node:24-slim` base with
-`firefox-esr`, `pngcrush` and `psmisc`, for x86_64 and aarch64. The upstream
+`firefox-esr` and `pngcrush`, for x86_64 and aarch64. The upstream
 Express server, Pug views and `cron.sh` screenshot pipeline run unmodified;
 `docker/` adds the two scripts the package needs.
 
@@ -134,7 +134,7 @@ None. The service is never held on a prompt.
 ## Health Checks
 
 - **`web` — Image Server.** Port 3030 listening. Not listening past the first few seconds means `npm start` died; read the log.
-- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Stuck on `loading` means Firefox is failing to screenshot (`Screenshot failed - keeping previous display`). The check watches the image, not the data, because `cron.sh` keeps the previous image on a screenshot failure — which is exactly what the Kindle would keep showing. An unreachable Mempool does not trip it: `data.mjs` writes empty fields (the daemon log shows `Fetched data for block height unknown`), and the fresh image renders without the figures.
+- **`updater` — Data Updater.** `success` while `display.png` is newer than twice the update interval; `loading` ("Waiting for a fresh display image") otherwise. Since upstream 1.3.0 the cycle is fail-safe: a failed Mempool fetch, invalid block data, a failed or invalid screenshot, or a hung Firefox (killed after `FIREFOX_TIMEOUT_SECONDS`, default 120 s) all keep the previous image and exit nonzero — so a stuck `loading` means the last cycles produced no publishable image, and the daemon log names the cause (`Data update failed`, `Invalid block data`, `Screenshot failed`, `Screenshot conversion failed`). The check watches the image, not the data: it trips exactly when what the Kindle would keep showing has gone stale. An unreachable Mempool therefore trips it now: `data.mjs` writes null figures, `cron.sh` rejects the invalid block data and keeps the old image, which then ages out.
 
 ## Backups and Restore
 

@@ -9,7 +9,7 @@ RUN npm ci --production
 FROM node:24-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    firefox-esr pngcrush psmisc ca-certificates \
+    firefox-esr pngcrush ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /build .
 COPY docker/entrypoint.sh /entrypoint.sh

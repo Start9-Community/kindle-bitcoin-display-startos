@@ -16,6 +16,11 @@ export const manifest = setupManifest({
     'kindle-bitcoin-display': {
       source: { dockerBuild: {} },
       arch: ['x86_64', 'aarch64'],
+      // No emulation: headless Firefox is unusable under QEMU and the images
+      // exist natively for both supported arches. Without this the SDK assumes
+      // emulation, hardwareRequirements.arch collapses to null, and the pack
+      // analysis demands an emulateMissingAs target.
+      emulateMissing: false,
     },
   },
 })
